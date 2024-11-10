@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <utility>
 #include <limits>
 
 using namespace std;
@@ -8,20 +9,6 @@ using namespace std;
 int inf(){  
     return std::numeric_limits<int>::max();
 }
-struct distancia{
-    int a;
-    int b;
-    int dist = 0;
-};
-
-int max(int a, int b){
-    if (a > b){
-        return a;
-    }else{
-        return b;
-    }
-}
-
 
 template <typename T>
 void print_list(vector<T> v){
@@ -37,64 +24,50 @@ void print_matrix(vector<vector<int>> m){
     }
 }
 
-//aristas es un vector de de vectores que contienen <nodo vecino, peso de la arista>
-distancia* BFS_dist(const vector<vector<pair<int, int>>> & aristas, int nodo){
-    distancia* max_dist = new distancia();
-    max_dist->a = nodo;
-    max_dist->dist = 0;
-    vector<distancia*> distancias(aristas.size());
-    for (int i = 0; i < aristas.size(); i++){
-        distancias[i] = new distancia();
-    }
+pair<int,int> BFS_dist(vector<vector<int>> & aristas, int nodo){
+    vector<int> distancias(aristas.size(), -1);
     vector<int> estados(aristas.size(), -1);
     estados[nodo] = 0;
-
+    distancias[nodo] = 0;
+    int indice_max = 0;
     queue<int> q;
     q.push(nodo);
-
-    while(q.size() != 0){
+    while(q.size() != 0){ //n veces
         int v = q.front();
-        for (auto vecino : aristas[v]){
-            int w = vecino.first;
-            if (estados[w] == -1){
-                int peso = vecino.second;
-                int dist = distancias[v]->dist + peso;
-                if (dist > max_dist->dist){
-                    max_dist->dist = dist;
-                    max_dist->b = w;
-                }
-                distancias[w]->dist = dist;
-                estados[w] = 0;
-                q.push(w);
+        for (auto vecino : aristas[v]){ //n veces
+            if (estados[vecino] == -1){//O(1)
+                distancias[vecino] = distancias[v] + 1; //O(1)
+                if (distancias[vecino] > distancias[indice_max]){//O(1)
+                    indice_max = vecino;//O(1)
+                }//O(1)
+                estados[vecino] = 0;//O(1)
+                q.push(vecino);//O(1)
             }
         }
-        estados[v] = 1;
-        q.pop();
+        estados[v] = 1;//O(1)
+        q.pop();//O(1)
     }
-    return max_dist;
+    return make_pair(distancias[indice_max], indice_max);
 }
 
-distancia* camino_max(const vector<vector<pair<int, int>>> & aristas){
-    distancia* camino_max = nullptr;
+pair<int,int> camino_max(vector<vector<int>> & aristas){
+    int max_dist = 0;
+    pair<int,int> camino;
     for (int i = 0; i < aristas.size(); i++){
-        distancia* nuevo = BFS_dist(aristas, i);
-        if (camino_max == nullptr || nuevo->dist > camino_max->dist){
-            camino_max = nuevo;
+        pair<int,int> rta = BFS_dist(aristas, i);
+        if (rta.first > max_dist){
+            max_dist = rta.first;
+            camino = make_pair(i, rta.second);
         }
     }
-    return camino_max;
+    return camino;
 }
 
+int main(){
+    vector<vector<int>> aristas = {{1,2},{0},{0,3},{2}};
 
-
-int main() {
-    // Valor grande que se usa como "infinito" para enteros
-    vector<vector<pair<int,int>>> aristas = {{{1, 1}, {2, 1}}, {{0, 1},{3, 1}}, {{0, 1}}, {{1,1}}};
-    distancia* dist = BFS_dist(aristas, 1);
-    cout << "a:" << dist->a << " b:" << dist->b << " dist:" << dist->dist << endl;
-
-    distancia* camino = camino_max(aristas);
-    cout << "a:" << camino->a << " b:" << camino->b << " dist:" << camino->dist << endl;
-
+    pair<int,int> camino = camino_max(aristas);
+    cout << "a:" << camino.first << " b:" << camino.second << endl;
+    
     return 0;
 }
