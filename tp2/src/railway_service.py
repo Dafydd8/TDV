@@ -2,7 +2,6 @@ import json
 import networkx as nx
 from math import ceil
 import matplotlib.pyplot as plt
-import os
 
 def load_instance(filename):
     with open(filename) as json_file:
@@ -54,6 +53,14 @@ def transform_graph(G):
         H.add_node(u, demand = 0)
         H.add_node(v, demand = 0)
         H.add_edge(u, v, weight = weight, capacity = u_bound - l_bound)
+
+    for u, v, data in G.edges(data=True):
+        l_bound = data["lower_bound"]
+        H.nodes[u]["demand"] += l_bound
+        H.nodes[v]["demand"] -= l_bound
+
+    for node in H.nodes():
+        print(node, H.nodes[node]["demand"])
     return H
 
 def solve_circulacion(G):
