@@ -22,19 +22,21 @@ def create_graph(data):
 
     nodos_estacion = {a: [], b: []} # Diccionario con los tiempos de salida y llegada de cada estación
 
-    for service in services:
+    for i, service in enumerate(services):
         stops = services[service]["stops"] 
         salida = stops[0]
-        salida_str = salida["station"]+"_"+str(salida["time"]) # Identificador del nodo de salida
         llegada = stops[1]
-        llegada_id = llegada["station"]+"_"+str(llegada["time"]) # Identificador del nodo de llegada
+        salida_tupla = (salida["time"], service)
+        llegada_tupla = (llegada["time"], service)
+        salida_str = salida["station"]+"_"+str(salida_tupla) # Tag del nodo de salida
+        llegada_str = llegada["station"]+"_"+str(llegada_tupla) # Tag del nodo de llegada
         needed_rs = ceil(services[service]["demand"][0]/rs_capacity) # RS necesarios para el servicio
-        nodos_estacion[salida["station"]].append(salida["time"]) # Agregar el tiempo de salida a la lista de tiempos de la estación
-        nodos_estacion[llegada["station"]].append(llegada["time"]) # Agregar el tiempo de llegada a la lista de tiempos de la estación
+        nodos_estacion[salida["station"]].append(salida_tupla) # Agregar el tiempo de salida a la lista de tiempos de la estación
+        nodos_estacion[llegada["station"]].append(llegada_tupla) # Agregar el tiempo de llegada a la lista de tiempos de la estación
 
         G.add_node(salida_str, demand = 0) # Crear nodo de salida
-        G.add_node(llegada_id, demand = 0) # Crear nodo de llegada
-        G.add_edge(salida_str, llegada_id, weight = 0, lower_bound = needed_rs, upper_bound = max_rs) # Crear arista entre la salida y la llegada
+        G.add_node(llegada_str, demand = 0) # Crear nodo de llegada
+        G.add_edge(salida_str, llegada_str, weight = 0, lower_bound = needed_rs, upper_bound = max_rs) # Crear arista entre la salida y la llegada
 
     nodos_estacion[a].sort()
     nodos_estacion[b].sort()
@@ -74,11 +76,20 @@ def transform_graph(G):
 def solve_circulacion(G):
     '''Resolver el problema de circulación reduciéndolo a un problema de flujo de costo mínimo'''
     H = transform_graph(G)
-    cost, circulacion = nx.network_simplex(H) # Resolver el problema de circulación con network_simplex
+    circulacion = nx.min_cost_flow(H) # Resolver el problema de circulación con network_simplex
     for u in circulacion:
         for v in circulacion[u]:
             circulacion[u][v] = circulacion[u][v] + G[u][v]["lower_bound"] # Convertir la respuesta del problema de flujo de costo mínimo a la del problema de circulación
-    return cost, circulacion
+    return circulacion
+
+def get_cost(flow, nodos_estacion):
+    '''Calcular el costo de una circulación a partir del flujo obtenido'''
+    cost = 0
+    for estacion in nodos_estacion:
+        begin = nodos_estacion[estacion][0]
+        end = nodos_estacion[estacion][-1]
+        cost += flow[estacion+"_"+str(end)][estacion+"_"+str(begin)] # Sumar al costo el flujo de la arista de trasnoche
+    return cost
 
 def show_graph(G, data, nodos_estacion):
     '''Mostrar un grafo G (de circulación o de flujo de costo mínimo) en dos columnas, con los nodos de la estación 'a' a la izquierda y los de la estación 'b' a la derecha'''

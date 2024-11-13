@@ -5,11 +5,11 @@ import pprint
 
 instance = {}
 instance['services'] = {}
-instance['stations'] = ['Tigre','Retiro']
+instance['stations'] = ['Pilar','Cabred']
 instance['cost_per_unit'] = {'Tigre' : 1.0, 'Retiro' : 1.0}
 
 
-filename = 'toy_instance'
+filename = 'pilar_cabred_instance'
 # Open the CSV file in read mode
 with open(filename + '.csv', 'r') as csvfile:
     # Create a CSV reader object
