@@ -82,13 +82,16 @@ def solve_circulacion(G):
             circulacion[u][v] = circulacion[u][v] + G[u][v]["lower_bound"] # Convertir la respuesta del problema de flujo de costo mínimo a la del problema de circulación
     return circulacion
 
-def get_cost(flow, nodos_estacion):
-    '''Calcular el costo de una circulación a partir del flujo obtenido'''
+def get_cost(G, flow, nodos_estacion):
+    '''Calcular el costo de una circulación considerando solo el peso de los arcos de trasnoche'''
     cost = 0
     for estacion in nodos_estacion:
         begin = nodos_estacion[estacion][0]
         end = nodos_estacion[estacion][-1]
-        cost += flow[estacion+"_"+str(end)][estacion+"_"+str(begin)] # Sumar al costo el flujo de la arista de trasnoche
+        begin_str = estacion+"_"+str(begin)
+        end_str = estacion+"_"+str(end)
+        peso = G.get_edge_data(end_str, begin_str).get("weight", None)
+        cost += flow[end_str][begin_str] *  peso # Sumar al costo el flujo de la arista de trasnoche
     return cost
 
 def show_graph(G, data, nodos_estacion):
